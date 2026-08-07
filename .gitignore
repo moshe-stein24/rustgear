@@ -1,0 +1,7 @@
+target/
+Cargo.lock
+*.orig
+*.bk
+*.swp
+.DS_Store
+Thumbs.db
