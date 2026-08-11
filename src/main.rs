@@ -1,94 +1,43 @@
-use eframe::egui;
+use std::time::{Duration, Instant};
 
-struct RustGearLauncher {
-    selected_aircraft: String,
-    aircraft_list: Vec<String>,
-    settings_open: bool,
-}
+use rustgear::{Aircraft, AppConfig, Environment, FlightState, InstrumentationState, InputState, SimTime};
 
-impl RustGearLauncher {
-    fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        Self {
-            selected_aircraft: "c172p".to_string(),
-            aircraft_list: vec![
-                "c172p".to_string(),
-                "f16-block-52".to_string(),
-                "777-200".to_string(),
-            ],
-            settings_open: false,
+const FIXED_DT: f64 = 1.0 / 120.0;
+
+fn main() {
+    let _cfg = AppConfig::default();
+    let _env = Environment::default();
+    let catalog = rustgear::load_catalog();
+    let entry = catalog.find("c172p").or_else(|| catalog.find("f16")).expect("loaded catalog has aircraft");
+    let mut plane = Aircraft::new(&entry.id, &entry.name, entry.model);
+    let mut state = FlightState::default();
+    let mut input = InputState::default();
+    input.throttle = 1.0;
+    input.pitch = 0.1;
+    let mut instruments = InstrumentationState::default();
+    let mut time = SimTime::new();
+    let mut last = Instant::now();
+    let mut accum = 0.0;
+
+    println!("RustGear: aircraft={} model={}", plane.id, plane.name);
+    for step in 1..=1800 {
+        let now = Instant::now();
+        let dt_real = now.duration_since(last).as_secs_f64();
+        last = now;
+        accum += dt_real;
+        while accum >= FIXED_DT {
+            accum -= FIXED_DT;
+            plane.step(FIXED_DT, &input, &mut state);
+            instruments.update(&state, FIXED_DT);
+            time.update(FIXED_DT);
         }
+        if step % 120 == 0 {
+            println!(
+                "t={:.2}s speed={:.2}kt alt={:.1}ft hdg={:.1} fuel={:.2}kg | IAS={:.2}kt ALT={:.1}ft",
+                time.sim_time, state.speed_kts, state.altitude_ft, state.heading_deg, plane.systems.fuel_remaining_kg,
+                instruments.airspeed_kt, instruments.altitude_ft
+            );
+        }
+        std::thread::sleep(Duration::from_millis(16));
     }
-}
-
-impl eframe::App for RustGearLauncher {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-                ui.menu_button("Settings", |ui| {
-                    if ui.button("Configuration").clicked() {
-                        self.settings_open = !self.settings_open;
-                        ui.close_menu();
-                    }
-                });
-                ui.menu_button("Help", |ui| {
-                    ui.label("RustGear Launcher v0.1.0");
-                    ui.label("FlightGear rewrite in Rust");
-                });
-            });
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("RustGear - FlightGear Rewrite");
-            ui.separator();
-
-            ui.label("Select Aircraft:");
-            egui::ComboBox::from_label("Aircraft")
-                .selected_text(&self.selected_aircraft)
-                .show_ui(ui, |ui| {
-                    for aircraft in &self.aircraft_list {
-                        ui.selectable_value(&mut self.selected_aircraft, aircraft.clone(), aircraft);
-                    }
-                });
-
-            ui.separator();
-            ui.label(format!("Selected: {}", self.selected_aircraft));
-
-            if ui.button("Start FlightGear").clicked() {
-                println!("Starting with aircraft: {}", self.selected_aircraft);
-            }
-
-            if self.settings_open {
-                egui::Window::new("Settings")
-                    .open(&mut self.settings_open)
-                    .show(ctx, |ui| {
-                        ui.label("Configuration options will go here.");
-                        ui.label("Graphics, Input, Scenery settings.");
-                    });
-            }
-        });
-
-        egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-            ui.label("Ready");
-        });
-    }
-}
-
-fn main() -> Result<(), eframe::Error> {
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([400.0, 500.0])
-            .with_title("RustGear Launcher"),
-        ..Default::default()
-    };
-
-    eframe::run_native(
-        "rustgear-launcher",
-        options,
-        Box::new(|cc| Ok(Box::new(RustGearLauncher::new(cc)))),
-    )
 }
