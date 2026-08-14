@@ -1,5 +1,3 @@
-use crate::fdm::FlightState;
-
 #[derive(Debug, Clone, Copy, Default)]
 pub struct InputState {
     pub roll: f64,
@@ -12,8 +10,10 @@ pub mod bindings;
 pub mod device_manager;
 pub mod devices;
 pub mod event;
+pub mod joystick;
 
 pub use bindings::{AxisBinding, InputAxis, InputBindingMap, InputButton};
 pub use device_manager::InputDeviceManager;
 pub use devices::{InputDevice, InputDeviceKind};
 pub use event::{InputEvent, apply_events};
+pub use joystick::{JoystickInput, JoystickState};

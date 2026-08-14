@@ -1,11 +1,15 @@
 use crate::input::InputState;
 
+pub const FIXED_DT: f64 = 1.0 / 120.0;
+
 /// 3-DOF point-mass flight model.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FlightState {
     pub speed_kts: f64,
     pub altitude_ft: f64,
     pub heading_deg: f64,
+    pub pitch_deg: f64,
+    pub roll_deg: f64,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -31,6 +35,8 @@ impl FlightModel {
         let dist_m = state.speed_kts * 0.514444 * dt;
         state.altitude_ft += (input.pitch * 5.0 * dt).clamp(-dist_m, dist_m);
         state.heading_deg = (state.heading_deg + input.yaw * 20.0 * dt + 360.0) % 360.0;
+        state.pitch_deg = (state.pitch_deg + input.pitch * 15.0 * dt).clamp(-30.0, 30.0);
+        state.roll_deg = (state.roll_deg + input.roll * 10.0 * dt).clamp(-60.0, 60.0);
     }
 }
 
@@ -49,7 +55,7 @@ mod tests {
     #[test]
     fn step_does_not_decrease_speed_with_zero_throttle() {
         let model = FlightModel { mass_kg: 1000.0, wing_area_m2: 10.0, cd0: 0.04, k: 0.04, thrust_n: 1000.0 };
-        let mut state = FlightState { speed_kts: 100.0, altitude_ft: 0.0, heading_deg: 0.0 };
+        let mut state = FlightState { speed_kts: 100.0, altitude_ft: 0.0, heading_deg: 0.0, pitch_deg: 0.0, roll_deg: 0.0 };
         let input = InputState { roll: 0.0, pitch: 0.0, yaw: 0.0, throttle: 0.0 };
         model.step(1.0, &input, &mut state);
         assert!(state.speed_kts < 100.0);

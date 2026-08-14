@@ -5,6 +5,8 @@ pub mod config;
 pub mod environment;
 pub mod fdm;
 pub mod gui;
+
+pub use gui::RustGearApp;
 pub mod instrumentation;
 pub mod input;
 pub mod multiplayer;
