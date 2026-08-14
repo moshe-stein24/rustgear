@@ -1,8 +1,9 @@
+use std::collections::HashSet;
 use std::time::Instant;
 
 use eframe::egui;
 
-use crate::{input::InputBindingMap, aircraft::Aircraft, fdm::FlightState, instrumentation::InstrumentationState, input::InputState, input::InputEvent, input::InputAxis, input::JoystickInput, time::SimTime};
+use crate::{input::InputBindingMap, aircraft::Aircraft, fdm::FlightState, instrumentation::InstrumentationState, input::InputState, input::JoystickInput, time::SimTime};
 
 #[derive(Debug)]
 pub struct RustGearApp {
@@ -21,6 +22,7 @@ pub struct RustGearApp {
     pub ap_speed: bool,
     pub bindings: InputBindingMap,
     pub joystick: JoystickInput,
+    pub keys_held: HashSet<egui::Key>,
 }
 
 impl RustGearApp {
@@ -46,6 +48,7 @@ impl RustGearApp {
             state: Default::default(),
             instruments: Default::default(),
             time: Default::default(),
+            keys_held: HashSet::default(),
         }
     }
 
@@ -56,33 +59,75 @@ impl RustGearApp {
     }
 
     fn handle_keyboard_input(&mut self, ctx: &egui::Context) {
-        let mut events = Vec::new();
-        if ctx.input(|i| i.key_down(egui::Key::ArrowUp)) {
-            events.push(InputEvent { axis: InputAxis::Pitch, raw: -1.0 });
+        let mut pressed = Vec::new();
+        let mut released = Vec::new();
+
+        ctx.input(|i| {
+            for key in self.keys_held.iter() {
+                if !i.key_down(*key) {
+                    released.push(*key);
+                }
+            }
+            for key in [
+                egui::Key::ArrowUp,
+                egui::Key::ArrowDown,
+                egui::Key::ArrowLeft,
+                egui::Key::ArrowRight,
+                egui::Key::Q,
+                egui::Key::E,
+                egui::Key::PageUp,
+                egui::Key::PageDown,
+            ] {
+                if i.key_down(key) && !self.keys_held.contains(&key) {
+                    pressed.push(key);
+                }
+            }
+        });
+
+        for key in &released {
+            self.keys_held.remove(key);
         }
-        if ctx.input(|i| i.key_down(egui::Key::ArrowDown)) {
-            events.push(InputEvent { axis: InputAxis::Pitch, raw: 1.0 });
+        for key in &pressed {
+            self.keys_held.insert(*key);
         }
-        if ctx.input(|i| i.key_down(egui::Key::ArrowLeft)) {
-            events.push(InputEvent { axis: InputAxis::Roll, raw: -1.0 });
+
+        let throttle_rate = 1.0 * crate::fdm::flight_model::FIXED_DT;
+        let pitch_rate = 1.0 * crate::fdm::flight_model::FIXED_DT;
+        let roll_rate = 1.0 * crate::fdm::flight_model::FIXED_DT;
+        let yaw_rate = 1.0 * crate::fdm::flight_model::FIXED_DT;
+
+        if self.keys_held.contains(&egui::Key::ArrowUp) {
+            self.input.pitch = (self.input.pitch - pitch_rate).clamp(-1.0, 1.0);
         }
-        if ctx.input(|i| i.key_down(egui::Key::ArrowRight)) {
-            events.push(InputEvent { axis: InputAxis::Roll, raw: 1.0 });
+        if self.keys_held.contains(&egui::Key::ArrowDown) {
+            self.input.pitch = (self.input.pitch + pitch_rate).clamp(-1.0, 1.0);
         }
-        if ctx.input(|i| i.key_down(egui::Key::Q)) {
-            events.push(InputEvent { axis: InputAxis::Yaw, raw: -1.0 });
+        if self.keys_held.contains(&egui::Key::ArrowLeft) {
+            self.input.roll = (self.input.roll - roll_rate).clamp(-1.0, 1.0);
         }
-        if ctx.input(|i| i.key_down(egui::Key::E)) {
-            events.push(InputEvent { axis: InputAxis::Yaw, raw: 1.0 });
+        if self.keys_held.contains(&egui::Key::ArrowRight) {
+            self.input.roll = (self.input.roll + roll_rate).clamp(-1.0, 1.0);
         }
-        if ctx.input(|i| i.key_down(egui::Key::PageUp)) {
-            events.push(InputEvent { axis: InputAxis::Throttle, raw: 1.0 });
+        if self.keys_held.contains(&egui::Key::Q) {
+            self.input.yaw = (self.input.yaw - yaw_rate).clamp(-1.0, 1.0);
         }
-        if ctx.input(|i| i.key_down(egui::Key::PageDown)) {
-            events.push(InputEvent { axis: InputAxis::Throttle, raw: -1.0 });
+        if self.keys_held.contains(&egui::Key::E) {
+            self.input.yaw = (self.input.yaw + yaw_rate).clamp(-1.0, 1.0);
         }
-        if !events.is_empty() {
-            crate::input::apply_events(&mut self.input, &events, &self.bindings);
+        if self.keys_held.contains(&egui::Key::PageUp) {
+            self.input.throttle = (self.input.throttle + throttle_rate).clamp(0.0, 1.0);
+        }
+        if self.keys_held.contains(&egui::Key::PageDown) {
+            self.input.throttle = (self.input.throttle - throttle_rate).clamp(0.0, 1.0);
+        }
+        if !self.keys_held.contains(&egui::Key::ArrowUp) && !self.keys_held.contains(&egui::Key::ArrowDown) {
+            self.input.pitch *= 0.9;
+        }
+        if !self.keys_held.contains(&egui::Key::ArrowLeft) && !self.keys_held.contains(&egui::Key::ArrowRight) {
+            self.input.roll *= 0.9;
+        }
+        if !self.keys_held.contains(&egui::Key::Q) && !self.keys_held.contains(&egui::Key::E) {
+            self.input.yaw *= 0.9;
         }
     }
 }
