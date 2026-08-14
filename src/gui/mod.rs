@@ -77,6 +77,8 @@ impl RustGearApp {
                 egui::Key::E,
                 egui::Key::PageUp,
                 egui::Key::PageDown,
+                egui::Key::Enter,
+                egui::Key::Num0,
             ] {
                 if i.key_down(key) && !self.keys_held.contains(&key) {
                     pressed.push(key);
@@ -112,6 +114,12 @@ impl RustGearApp {
             self.input.yaw = (self.input.yaw - yaw_rate).clamp(-1.0, 1.0);
         }
         if self.keys_held.contains(&egui::Key::E) {
+            self.input.yaw = (self.input.yaw + yaw_rate).clamp(-1.0, 1.0);
+        }
+        if self.keys_held.contains(&egui::Key::Enter) {
+            self.input.yaw = (self.input.yaw - yaw_rate).clamp(-1.0, 1.0);
+        }
+        if self.keys_held.contains(&egui::Key::Num0) {
             self.input.yaw = (self.input.yaw + yaw_rate).clamp(-1.0, 1.0);
         }
         if self.keys_held.contains(&egui::Key::PageUp) {
@@ -224,12 +232,24 @@ fn draw_hud(
 
     // Center attitude indicator
     let ai_cx = cx;
-    let ai_cy = cy - 20.0;
-    let ai_r = (h * 0.35).min(w * 0.35).min(160.0);
+    let ai_cy = cy - 80.0;
+    let ai_r = (h * 0.38).min(w * 0.38).min(170.0);
     let pitch_rad = (instruments.pitch_deg as f32).to_radians();
     let roll_rad = (instruments.roll_deg as f32).to_radians();
     let pitch_offset = pitch_rad.sin() * ai_r * 0.8;
     let horizon_y = ai_cy - pitch_offset;
+
+    // Speed indicator above attitude indicator
+    let speed = instruments.airspeed_kt as f32;
+    let speed_x = cx - w * 0.32;
+    let speed_y = ai_cy - ai_r - 35.0;
+    painter.text(
+        egui::pos2(speed_x, speed_y),
+        egui::Align2::CENTER_TOP,
+        format!("{:.0} kt", speed),
+        egui::FontId::monospace(18.0),
+        green,
+    );
 
     // Sky/ground background
     let sky_top = if roll_rad.cos() > 0.0 { horizon_y - ai_r } else { horizon_y + ai_r };
