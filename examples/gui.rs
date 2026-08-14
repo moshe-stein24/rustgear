@@ -9,6 +9,7 @@ fn main() -> eframe::Result {
             wing_area_m2: 16.2,
             cd0: 0.038,
             k: 0.04,
+            cl_alpha_per_rad: 5.5,
             thrust_n: 1100.0,
         },
     );

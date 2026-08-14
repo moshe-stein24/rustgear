@@ -103,6 +103,7 @@ impl AircraftMetadata {
             wing_area_m2: self.sw,
             cd0: self.cd_min,
             k: 0.04,
+            cl_alpha_per_rad: self.cl_alpha,
             thrust_n,
         }
     }
