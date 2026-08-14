@@ -343,7 +343,7 @@ fn draw_hud(
     let tape_y = rect.bottom() - tape_h / 2.0 - 10.0;
 
     // Status line above heading tape
-    let status_y = tape_y - tape_h / 2.0 - 12.0;
+    let status_y = tape_y - tape_h / 2.0 - 24.0;
     painter.text(
         egui::pos2(cx, status_y),
         egui::Align2::CENTER_BOTTOM,
