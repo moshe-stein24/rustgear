@@ -19,7 +19,7 @@ pub struct Gear {
     pub damp: f64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AircraftMetadata {
     pub id: String,
     pub sw: f64,
@@ -40,6 +40,7 @@ pub struct AircraftMetadata {
     pub cm_alpha: f64,
     pub cm_q: f64,
     pub cm_de: f64,
+    pub cm_de_per_unit: f64,
     pub cy_beta: f64,
     pub cl_p: f64,
     pub cn_beta: f64,
@@ -89,22 +90,27 @@ impl AircraftMetadata {
         let cm_alpha = v.get("Cma").and_then(|x| x.as_f64()).unwrap_or(0.0);
         let cm_q = v.get("Cmq").and_then(|x| x.as_f64()).unwrap_or(0.0);
         let cm_de = v.get("Cmde").and_then(|x| x.as_f64()).unwrap_or(0.0);
+        let cm_de_per_unit = v.get("Cmde").and_then(|x| x.as_f64()).unwrap_or(0.35);
         let cy_beta = v.get("CYb").and_then(|x| x.as_f64()).unwrap_or(0.0);
         let cl_p = v.get("Clp").and_then(|x| x.as_f64()).unwrap_or(0.0);
         let cn_beta = v.get("Cnb").and_then(|x| x.as_f64()).unwrap_or(0.0);
         let cn_r = v.get("Cnr").and_then(|x| x.as_f64()).unwrap_or(0.0);
-        Ok(Self { id, sw, cbar, bw, mass_kg, engine: engines, gear: gears, cl_min, cl_alpha, cl_q, cl_df, cd_min, cd_alpha, cd_beta, cd_i, cd_df, cm_alpha, cm_q, cm_de, cy_beta, cl_p, cn_beta, cn_r })
+        Ok(Self { id, sw, cbar, bw, mass_kg, engine: engines, gear: gears, cl_min, cl_alpha, cl_q, cl_df, cd_min, cd_alpha, cd_beta, cd_i, cd_df, cm_alpha, cm_q, cm_de, cm_de_per_unit, cy_beta, cl_p, cn_beta, cn_r })
     }
 
     pub fn to_flight_model(&self) -> FlightModel {
-        let thrust_n = self.engine.first().map(|e| e.ft_max).unwrap_or(0.0);
+        let thrust_n = self.engine.first().map(|e| e.ft_max).unwrap_or(0.0) * 4.44822;
         FlightModel {
-            mass_kg: self.mass_kg,
-            wing_area_m2: self.sw,
+            mass_kg: self.mass_kg * 0.453592,
+            wing_area_m2: self.sw * 0.092903,
+            cbar: self.cbar,
             cd0: self.cd_min,
             k: 0.04,
             cl_alpha_per_rad: self.cl_alpha,
+            cm_alpha_per_rad: self.cm_alpha,
             thrust_n,
+            cm_de_per_unit: self.cm_de_per_unit,
+            cm_q: self.cm_q,
         }
     }
 }

@@ -59,8 +59,13 @@ mod tests {
         let cfg = AircraftConfig::new("c172p", "Cessna 172P", FlightModel {
             mass_kg: 1043.0,
             wing_area_m2: 16.2,
+            cbar: 1.5,
             cd0: 0.038,
             k: 0.04,
+            cl_alpha_per_rad: 5.5,
+            cm_alpha_per_rad: -0.6,
+            cm_de_per_unit: 0.35,
+            cm_q: -12.4,
             thrust_n: 1100.0,
         });
         cat.add(cfg);

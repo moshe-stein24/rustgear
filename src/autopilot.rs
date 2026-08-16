@@ -84,7 +84,7 @@ mod tests {
         let mut ap = Autopilot::new();
         ap.state.mode = AutopilotMode::Heading;
         ap.state.target_heading_deg = 90.0;
-        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0 };
+        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0, ..Default::default() };
         let mut input = InputState::default();
         ap.state.update(1.0, &state, &mut input);
         assert!(input.yaw > 0.0, "expected positive yaw to turn towards 90deg, got {}", input.yaw);
@@ -95,7 +95,7 @@ mod tests {
         let mut ap = Autopilot::new();
         ap.state.mode = AutopilotMode::Altitude;
         ap.state.target_altitude_ft = 6000.0;
-        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0 };
+        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0, ..Default::default() };
         let mut input = InputState::default();
         ap.state.update(1.0, &state, &mut input);
         assert!(input.pitch > 0.0, "expected positive pitch to climb, got {}", input.pitch);
@@ -106,7 +106,7 @@ mod tests {
         let mut ap = Autopilot::new();
         ap.state.mode = AutopilotMode::Speed;
         ap.state.target_speed_kt = 200.0;
-        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0 };
+        let state = FlightState { heading_deg: 0.0, speed_kts: 100.0, altitude_ft: 5000.0, ..Default::default() };
         let mut input = InputState { throttle: 0.0, ..Default::default() };
         ap.state.update(1.0, &state, &mut input);
         assert!(input.throttle > 0.0, "expected throttle increase, got {}", input.throttle);

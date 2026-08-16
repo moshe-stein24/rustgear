@@ -28,7 +28,7 @@ mod tests {
     #[test]
     fn sync_update_snapshot() {
         let mut sync = MultiplayerSync::default();
-        let state = FlightState { speed_kts: 100.0, altitude_ft: 5000.0, heading_deg: 90.0 };
+        let state = FlightState { speed_kts: 100.0, altitude_ft: 5000.0, heading_deg: 90.0, ..Default::default() };
         sync.update(PlayerId(1), state);
         assert!(sync.snapshot().contains_key(&PlayerId(1)));
     }

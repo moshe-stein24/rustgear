@@ -64,7 +64,7 @@ mod tests {
     #[test]
     fn attitude_update_sets_pitch_derivative() {
         let mut ind = AttitudeIndicator::default();
-        let state = FlightState { altitude_ft: 10.0, speed_kts: 0.0, heading_deg: 0.0 };
+        let state = FlightState { altitude_ft: 10.0, speed_kts: 0.0, heading_deg: 0.0, ..Default::default() };
         ind.update(&state, 1.0);
         assert!((ind.pitch_deg - state.altitude_ft.sin() * 5.0).abs() < 1e-9);
     }

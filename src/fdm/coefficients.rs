@@ -80,6 +80,7 @@ mod tests {
             cm_alpha: 0.0,
             cm_q: 0.0,
             cm_de: 0.0,
+            cm_de_per_unit: 0.0,
             cy_beta: 0.0,
             cl_p: 0.0,
             cn_beta: 0.0,

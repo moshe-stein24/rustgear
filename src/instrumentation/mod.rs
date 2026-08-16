@@ -19,7 +19,7 @@ impl InstrumentationState {
         self.pitch_deg = state.pitch_deg;
         self.roll_deg = state.roll_deg;
         self.vertical_speed_fpm = ((state.altitude_ft - self.altitude_ft) / dt.max(1e-6)) * 60.0 * 0.3048;
-        self.turn_rate_deg_per_s *= (-2.0 * dt).exp();
+        self.turn_rate_deg_per_s = state.turn_rate_deg_per_s;
     }
 }
 
