@@ -242,7 +242,7 @@ impl eframe::App for RustGearApp {
         }
 
         if let Some(startup) = &mut self.startup {
-            if draw_startup(ctx, startup, &mut self.selected_index, &mut self.plane, &mut self.catalog) {
+            if draw_startup(ctx, startup, &mut self.selected_index, &mut self.plane, &self.catalog) {
                 self.state.speed_kts = startup.speed_kts;
                 self.state.altitude_ft = startup.altitude_ft;
                 self.state.heading_deg = startup.heading_deg;
@@ -326,9 +326,9 @@ impl eframe::App for RustGearApp {
 fn draw_startup(
     ctx: &egui::Context,
     startup: &mut StartupState,
-    _selected_index: &mut usize,
-    _plane: &mut Aircraft,
-    catalog: &mut AircraftCatalog,
+    selected_index: &mut usize,
+    plane: &mut Aircraft,
+    catalog: &AircraftCatalog,
 ) -> bool {
     let mut launched = false;
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -342,6 +342,9 @@ fn draw_startup(
                 ui.selectable_value(&mut startup.tab, StartupTab::Conditions, "Conditions");
                 ui.add_space(8.0);
                 if ui.button("Fly!").clicked() {
+                    *selected_index = startup.selected_aircraft;
+                    let cfg = &catalog.entries[*selected_index];
+                    *plane = Aircraft::new(cfg.id.as_str(), cfg.id.as_str(), cfg.model.clone());
                     launched = true;
                 }
             });
