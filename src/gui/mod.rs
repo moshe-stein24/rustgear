@@ -12,14 +12,16 @@ pub struct StartupState {
     pub altitude_ft: f64,
     pub heading_deg: f64,
     pub tab: StartupTab,
+    pub reopen_on_exit: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum StartupTab {
     #[default]
-    Location,
     Aircraft,
+    Location,
     Conditions,
+    Settings,
 }
 
 #[derive(Debug)]
@@ -51,6 +53,7 @@ pub struct RustGearApp {
     pub prev_p_pressed: bool,
     pub prev_r_pressed: bool,
     pub debug: bool,
+    pub reopen_on_exit: bool,
 }
 
 impl RustGearApp {
@@ -89,6 +92,7 @@ impl RustGearApp {
                 altitude_ft: 0.0,
                 heading_deg: 0.0,
                 tab: StartupTab::default(),
+                reopen_on_exit: false,
             }),
             view3d: true,
             roll_angle: 0.0,
@@ -97,6 +101,7 @@ impl RustGearApp {
             prev_p_pressed: false,
             prev_r_pressed: false,
             debug,
+            reopen_on_exit: false,
         }
     }
 
@@ -231,7 +236,16 @@ impl eframe::App for RustGearApp {
             self.step();
         }
         if ctx.input(|i| i.key_down(egui::Key::Escape)) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            self.startup = Some(StartupState {
+                selected_aircraft: self.selected_index,
+                airport_icao: String::new(),
+                speed_kts: self.state.speed_kts,
+                altitude_ft: self.state.altitude_ft,
+                heading_deg: self.state.heading_deg,
+                tab: StartupTab::Settings,
+                reopen_on_exit: self.reopen_on_exit,
+            });
+            self.input = InputState::default();
         }
 
         self.handle_keyboard_input(ctx);
@@ -277,6 +291,21 @@ impl eframe::App for RustGearApp {
                 if self.debug {
                     ui.checkbox(&mut self.debug, "Debug mode");
                 }
+                ui.menu_button("Menu", |ui| {
+                    if ui.button("Settings").clicked() {
+                        self.startup = Some(StartupState {
+                            selected_aircraft: self.selected_index,
+                            airport_icao: String::new(),
+                            speed_kts: self.state.speed_kts,
+                            altitude_ft: self.state.altitude_ft,
+                            heading_deg: self.state.heading_deg,
+                            tab: StartupTab::Settings,
+                            reopen_on_exit: self.reopen_on_exit,
+                        });
+                        self.input = InputState::default();
+                        ui.close_menu();
+                    }
+                });
             });
         });
 
@@ -340,6 +369,7 @@ fn draw_startup(
                 ui.selectable_value(&mut startup.tab, StartupTab::Location, "Location");
                 ui.selectable_value(&mut startup.tab, StartupTab::Aircraft, "Aircraft");
                 ui.selectable_value(&mut startup.tab, StartupTab::Conditions, "Conditions");
+                ui.selectable_value(&mut startup.tab, StartupTab::Settings, "Settings");
                 ui.add_space(8.0);
                 if ui.button("Fly!").clicked() {
                     *selected_index = startup.selected_aircraft;
@@ -382,6 +412,10 @@ fn draw_startup(
                             ui.add(egui::DragValue::new(&mut startup.heading_deg).speed(1.0).range(0.0..=360.0));
                             ui.end_row();
                         });
+                    }
+                    StartupTab::Settings => {
+                        ui.label("Settings");
+                        ui.checkbox(&mut startup.reopen_on_exit, "Re-open RustGear on exit");
                     }
                 }
             });

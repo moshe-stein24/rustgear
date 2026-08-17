@@ -12,13 +12,13 @@ pub struct InstrumentationState {
 }
 
 impl InstrumentationState {
-    pub fn update(&mut self, state: &FlightState, dt: f64) {
+    pub fn update(&mut self, state: &FlightState, _dt: f64) {
         self.airspeed_kt = state.speed_kts;
         self.altitude_ft = state.altitude_ft;
         self.heading_deg = state.heading_deg;
         self.pitch_deg = state.pitch_deg;
         self.roll_deg = state.roll_deg;
-        self.vertical_speed_fpm = ((state.altitude_ft - self.altitude_ft) / dt.max(1e-6)) * 60.0 * 0.3048;
+        self.vertical_speed_fpm = state.vertical_speed_fpm;
         self.turn_rate_deg_per_s = state.turn_rate_deg_per_s;
     }
 }
