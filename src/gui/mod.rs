@@ -361,64 +361,61 @@ fn draw_startup(
 ) -> bool {
     let mut launched = false;
     egui::CentralPanel::default().show(ctx, |ui| {
-        ui.horizontal(|ui| {
-            ui.vertical(|ui| {
-                ui.add_space(4.0);
-                ui.heading("RustGear");
-                ui.separator();
+        ui.vertical(|ui| {
+            ui.heading("RustGear");
+            ui.separator();
+            ui.horizontal(|ui| {
                 ui.selectable_value(&mut startup.tab, StartupTab::Location, "Location");
                 ui.selectable_value(&mut startup.tab, StartupTab::Aircraft, "Aircraft");
                 ui.selectable_value(&mut startup.tab, StartupTab::Conditions, "Conditions");
                 ui.selectable_value(&mut startup.tab, StartupTab::Settings, "Settings");
-                ui.add_space(8.0);
-                if ui.button("Fly!").clicked() {
-                    *selected_index = startup.selected_aircraft;
-                    let cfg = &catalog.entries[*selected_index];
-                    *plane = Aircraft::new(cfg.id.as_str(), cfg.id.as_str(), cfg.model.clone());
-                    launched = true;
-                }
             });
             ui.separator();
-            ui.vertical(|ui| {
-                match startup.tab {
-                    StartupTab::Location => {
-                        ui.label("Location");
-                        ui.label("Airport ICAO");
-                        ui.text_edit_singleline(&mut startup.airport_icao);
-                    }
-                    StartupTab::Aircraft => {
-                        ui.label("Aircraft");
-                        egui::ScrollArea::vertical().max_height(240.0).show(ui, |ui| {
-                            for (i, entry) in catalog.entries.iter().enumerate() {
-                                if ui.selectable_label(startup.selected_aircraft == i, entry.name.as_str()).clicked() {
-                                    startup.selected_aircraft = i;
-                                }
-                            }
-                        });
-                        ui.label(format!("Selected: {}", catalog.entries[startup.selected_aircraft].name));
-                    }
-                    StartupTab::Conditions => {
-                        ui.label("Startup Conditions");
-                        egui::Grid::new("startup_fields").striped(true).show(ui, |ui| {
-                            ui.label("Speed kt");
-                            ui.add(egui::DragValue::new(&mut startup.speed_kts).speed(1.0).range(0.0..=300.0));
-                            ui.end_row();
-
-                            ui.label("Altitude ft");
-                            ui.add(egui::DragValue::new(&mut startup.altitude_ft).speed(10.0).range(0.0..=50000.0));
-                            ui.end_row();
-
-                            ui.label("Heading °");
-                            ui.add(egui::DragValue::new(&mut startup.heading_deg).speed(1.0).range(0.0..=360.0));
-                            ui.end_row();
-                        });
-                    }
-                    StartupTab::Settings => {
-                        ui.label("Settings");
-                        ui.checkbox(&mut startup.reopen_on_exit, "Re-open RustGear on exit");
-                    }
+            match startup.tab {
+                StartupTab::Location => {
+                    ui.label("Location");
+                    ui.label("Airport ICAO");
+                    ui.text_edit_singleline(&mut startup.airport_icao);
                 }
-            });
+                StartupTab::Aircraft => {
+                    ui.label("Aircraft");
+                    egui::ScrollArea::vertical().max_height(240.0).show(ui, |ui| {
+                        for (i, entry) in catalog.entries.iter().enumerate() {
+                            if ui.selectable_label(startup.selected_aircraft == i, entry.name.as_str()).clicked() {
+                                startup.selected_aircraft = i;
+                            }
+                        }
+                    });
+                    ui.label(format!("Selected: {}", catalog.entries[startup.selected_aircraft].name));
+                }
+                StartupTab::Conditions => {
+                    ui.label("Startup Conditions");
+                    egui::Grid::new("startup_fields").striped(true).show(ui, |ui| {
+                        ui.label("Speed kt");
+                        ui.add(egui::DragValue::new(&mut startup.speed_kts).speed(1.0).range(0.0..=300.0));
+                        ui.end_row();
+
+                        ui.label("Altitude ft");
+                        ui.add(egui::DragValue::new(&mut startup.altitude_ft).speed(10.0).range(0.0..=50000.0));
+                        ui.end_row();
+
+                        ui.label("Heading °");
+                        ui.add(egui::DragValue::new(&mut startup.heading_deg).speed(1.0).range(0.0..=360.0));
+                        ui.end_row();
+                    });
+                }
+                StartupTab::Settings => {
+                    ui.label("Settings");
+                    ui.checkbox(&mut startup.reopen_on_exit, "Re-open RustGear on exit");
+                }
+            }
+            ui.add_space(12.0);
+            if ui.button("Fly!").clicked() {
+                *selected_index = startup.selected_aircraft;
+                let cfg = &catalog.entries[*selected_index];
+                *plane = Aircraft::new(cfg.id.as_str(), cfg.id.as_str(), cfg.model.clone());
+                launched = true;
+            }
         });
     });
     launched
