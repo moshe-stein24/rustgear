@@ -371,10 +371,6 @@ fn draw_startup(
                 ui.selectable_value(&mut startup.tab, StartupTab::Conditions, "Conditions");
                 ui.selectable_value(&mut startup.tab, StartupTab::Settings, "Settings");
                 ui.add_space(8.0);
-                ui.label(format!("Aircraft count: {}", catalog.entries.len()));
-                if !catalog.entries.is_empty() {
-                    ui.label(format!("First: {}", catalog.entries[0].name));
-                }
                 if ui.button("Fly!").clicked() {
                     *selected_index = startup.selected_aircraft;
                     let cfg = &catalog.entries[*selected_index];
